@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "415005226316",
+    "project_id": "amigos-699a6",
+    "storage_bucket": "amigos-699a6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:415005226316:android:c80b22b37f83694f2c8be9",
+        "android_client_info": {
+          "package_name": "com.example.amigos_ver1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwRlQTKSRY9zniwMgesDnwXiIDLDsfSeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
