@@ -64,7 +64,7 @@ class _MapPageState extends ConsumerState<MapPage> {
   bool isReviews = true;
   bool isPhotos = false;
 
-  final key = 'AIzaSyC2pXQNlX1FyEOdC7GR8RqkVHIAS1BurwQ';
+  final key = 'AIzaSyA0O18QK3GjutzA8ZAtGbDnTIy65lcera8';
 
   var selectedPlaceDetails;
 
@@ -173,29 +173,24 @@ class _MapPageState extends ConsumerState<MapPage> {
 
   _setNearMarker(LatLng point, String label, List types, String status) async {
     var counter = markerIdCounter++;
-
     final Uint8List markerIcon;
-
     if (types.contains('restaurant')){
-      markerIcon = await getBytesFromAsset('assets/restaurants.png', 75);
+      markerIcon = await getBytesFromAsset('assets/restaurants.png', 70);
     } else if (types.contains('bar')){
-      markerIcon = await getBytesFromAsset('assets/bars.png', 75);
+      markerIcon = await getBytesFromAsset('assets/bars.png', 70);
     }else if (types.contains('lodging')) {
-  markerIcon = await getBytesFromAsset('assets/hotels.png', 75);
-    }
-    else if (types.contains('park')) {
-      markerIcon = await getBytesFromAsset('assets/birds.png', 75);
+  markerIcon = await getBytesFromAsset('assets/hotels.png', 70);
+    } else if (types.contains('park')) {
+      markerIcon = await getBytesFromAsset('assets/birds.png', 70);
     }
     else {
       return null;
     }
-
     final Marker marker = Marker(
         markerId: MarkerId('marker_$counter'),
         position: point,
         onTap: () {},
         icon: BitmapDescriptor.fromBytes(markerIcon));
-
     setState(() {
       _markers.add(marker);
     });
@@ -214,7 +209,6 @@ class _MapPageState extends ConsumerState<MapPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     _pageController = PageController(initialPage: 1, viewportFraction: 0.85)
       ..addListener(_onScroll);
     super.initState();
@@ -248,7 +242,7 @@ class _MapPageState extends ConsumerState<MapPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery.of(context).size.height- 140;
     final screenWidth = MediaQuery.of(context).size.width;
 
     //Providers
@@ -263,7 +257,7 @@ class _MapPageState extends ConsumerState<MapPage> {
             Stack(
               children: [
                 Container(
-                  height: 710.0,
+                  height: screenHeight - 20,
                   width: screenWidth,
                   child: GoogleMap(
                     mapType: MapType.normal,
@@ -512,10 +506,10 @@ class _MapPageState extends ConsumerState<MapPage> {
                           ],
                         ),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                                 IconButton(
-                                  icon: const Icon(Icons.local_drink,color: Colors.blue,size: 30.0,),
+                                  icon: const Icon(Icons.no_drinks,color: Colors.blue,size: 30.0,),
                                   onPressed: () async{
                                     var placesResult = await MapServices().getPlaceDetails(tappedPoint,
                                         radiusValue.toInt(),"bar");
@@ -542,7 +536,6 @@ class _MapPageState extends ConsumerState<MapPage> {
                                     pressedNear = true;
                                   },
                                   ),
-                              SizedBox(width: 50.0,),
                               IconButton(
                                 icon: const Icon(Icons.local_dining,color: Colors.blue,size: 30.0,),
                                 onPressed: () async{
@@ -571,7 +564,6 @@ class _MapPageState extends ConsumerState<MapPage> {
                                   pressedNear = true;
                                 },
                               ),
-                              SizedBox(width: 50.0,),
                               IconButton(
                                 icon: const Icon(Icons.hotel_sharp,color: Colors.blue,size: 30.0,),
                                 onPressed: () async{
@@ -600,7 +592,6 @@ class _MapPageState extends ConsumerState<MapPage> {
                                   pressedNear = true;
                                 },
                               ),
-                              SizedBox(width: 50.0,),
                               IconButton(
                                 icon: const Icon(Icons.park, color: Colors.blue,size: 30.0,),
                                 onPressed: () async{
@@ -630,7 +621,6 @@ class _MapPageState extends ConsumerState<MapPage> {
                                 },
                               ),
                             ],
-
                           )
                         ],
                       ),
@@ -700,7 +690,7 @@ class _MapPageState extends ConsumerState<MapPage> {
                                         tappedPlaceDetail[
                                         'formatted_address'] ??
                                             'none given',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontFamily: 'WorkSans',
                                             fontSize: 11.0,
                                             fontWeight: FontWeight.w400),
@@ -840,8 +830,8 @@ class _MapPageState extends ConsumerState<MapPage> {
                     ))
                     : Container(),
                 Positioned(
-                  right: 2.0,
-                  top: 530.0,
+                  right: 5.0,
+                  top: 430.0,
                   child: Card(
                     elevation: 20,
                     color: Colors.transparent,
@@ -984,7 +974,7 @@ class _MapPageState extends ConsumerState<MapPage> {
     if (photoElement == null || photoElement.length == 0) {
       showBlankCard = true;
       return Container(
-        child: Center(
+        child: const Center(
           child: Text(
             'No Photos',
             style: TextStyle(
@@ -1002,7 +992,7 @@ class _MapPageState extends ConsumerState<MapPage> {
 
       return Column(
         children: [
-          SizedBox(height: 10.0),
+          const SizedBox(height: 10.0),
           Container(
               height: 200.0,
               width: 200.0,
@@ -1012,7 +1002,7 @@ class _MapPageState extends ConsumerState<MapPage> {
                       image: NetworkImage(
                           'https://maps.googleapis.com/maps/api/place/photo?maxwidth=$maxWidth&maxheight=$maxHeight&photo_reference=$placeImg&key=$key'),
                       fit: BoxFit.cover))),
-          SizedBox(height: 10.0),
+          const SizedBox(height: 10.0),
           Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
             GestureDetector(
               onTap: () {
@@ -1032,7 +1022,7 @@ class _MapPageState extends ConsumerState<MapPage> {
                     color: photoGalleryIndex != 0
                         ? Colors.green.shade500
                         : Colors.grey.shade500),
-                child: Center(
+                child: const Center(
                   child: Text(
                     'Prev',
                     style: TextStyle(
@@ -1045,8 +1035,8 @@ class _MapPageState extends ConsumerState<MapPage> {
               ),
             ),
             Text(
-              '$tempDisplayIndex/' + photoElement.length.toString(),
-              style: TextStyle(
+              '$tempDisplayIndex/${photoElement.length}',
+              style: const TextStyle(
                   fontFamily: 'WorkSans',
                   fontSize: 12.0,
                   fontWeight: FontWeight.w500),
@@ -1069,7 +1059,7 @@ class _MapPageState extends ConsumerState<MapPage> {
                     color: photoGalleryIndex != photoElement.length - 1
                         ? Colors.green.shade500
                         : Colors.grey.shade500),
-                child: Center(
+                child: const Center(
                   child: Text(
                     'Next',
                     style: TextStyle(

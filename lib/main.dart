@@ -1,4 +1,4 @@
-import 'package:amigos_ver1/authentication/pageDecider.dart';
+import 'package:amigos_ver1/authentication/userTypeSelector.dart';
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -28,30 +28,17 @@ class Main extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        fontFamily: 'Poppins'
-      ),
+      theme: ThemeData(),
       home: AnimatedSplashScreen(
-        splash: const SingleChildScrollView(
-          child: Column(
-            children: [
-              Icon(
-                Icons.share_location_sharp,
-                color: Color.fromRGBO(195, 234, 109, 1),
-                size: 40.0,
-              ),
-              Text("AMIGOS",
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 35.0,
-                  color: Color.fromRGBO(195, 234, 109, 1),
-                ),)
-            ],
-          ),
+        backgroundColor: const Color.fromRGBO(214, 217, 244, 1),
+        splash: Scaffold(
+            backgroundColor: const Color.fromRGBO(214, 217, 244, 1),
+            body:Center(child: Image.asset("assets/amigos_logo.png",width: 300,height: 300,))
         ),
-        duration: 3000,
+        duration: 5000,
         splashTransition: SplashTransition.fadeTransition,
-        nextScreen: const Decider(),)
+        nextScreen: const UserTypeSelector(),
+      )
     );
   }
 }

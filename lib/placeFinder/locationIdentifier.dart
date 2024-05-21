@@ -14,35 +14,6 @@ class LocationIdentifier extends StatefulWidget {
 
 class _LocationIdentifierState extends State<LocationIdentifier> {
 
-  Future destinationImage(){
-      return showDialog(
-          context: context,
-          barrierDismissible: false,
-          barrierColor: Colors.white.withOpacity(0.9),
-          builder: (context){
-            return AlertDialog(
-              title: const Text("Upload destination image"),
-              content: const Text("How would you like to proceed?"),
-              actions: [
-                TextButton(onPressed: (){
-                  Navigator.pop(context);
-                },
-                    child: Text("Cancel")),
-                TextButton(
-                    onPressed: (){
-                      capturePhoto;
-                    },
-                    child: const Text("Camera")),
-                TextButton(
-                    onPressed: (){
-                      uploadPhoto;
-                    },//,
-                    child: const Text("Gallery"))
-              ],
-            );
-          });
-  }
-
   File? _imageFile;
 
   //upload photo from gallery
@@ -85,24 +56,26 @@ class _LocationIdentifierState extends State<LocationIdentifier> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: const Color.fromRGBO(214, 217, 244, 1),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(30.0,0.0,30.0,10.0),
+          padding: EdgeInsets.fromLTRB(screenWidth * 0.08, 0.0, screenWidth * 0.08, screenHeight * 0.01),
           child: Column(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(30.0),
                   child: Image.asset("assets/searchbyimage.jpg",width: 1000, height: 200,)
               ),
-              SizedBox(height: 30.0,),
+              SizedBox(height: 20.0,),
               const Row(
                 children: [
                   CircleAvatar(
                     backgroundColor: Color.fromRGBO(202, 201, 255, 1),
-                    radius: 50.0,
-                    child: Icon(Icons.remove_red_eye,size: 50,color: Color.fromRGBO(104, 100, 247, 1)),
+                    radius: 40.0,
+                    child: Icon(Icons.remove_red_eye,size: 30,color: Color.fromRGBO(104, 100, 247, 1)),
                   ),
                   SizedBox(width: 15.0,),
                   Align(
@@ -126,13 +99,13 @@ class _LocationIdentifierState extends State<LocationIdentifier> {
                   )
                 ],
               ),
-              const SizedBox(height: 35.0,),
+              const SizedBox(height: 20.0,),
               const Row(
                 children: [
                   CircleAvatar(
                     backgroundColor: Color.fromRGBO(202, 201, 255, 1),
-                    radius: 50.0,
-                    child: Icon(Icons.camera_alt,size: 50,color: Color.fromRGBO(104, 100, 247, 1)),
+                    radius: 40.0,
+                    child: Icon(Icons.camera_alt,size: 30,color: Color.fromRGBO(104, 100, 247, 1)),
                   ),
                   SizedBox(width: 15.0,),
                   Align(
@@ -156,13 +129,13 @@ class _LocationIdentifierState extends State<LocationIdentifier> {
                   )
                 ],
               ),
-              const SizedBox(height: 35.0,),
+              const SizedBox(height: 20.0,),
               const Row(
                 children: [
                   CircleAvatar(
                     backgroundColor: Color.fromRGBO(202, 201, 255, 1),
-                    radius: 50.0,
-                    child: Icon(Icons.attractions,size: 50,color: Color.fromRGBO(104, 100, 247, 1)),
+                    radius: 40.0,
+                    child: Icon(Icons.attractions,size: 30,color: Color.fromRGBO(104, 100, 247, 1)),
                   ),
                   SizedBox(width: 15.0,),
                   Align(
@@ -194,17 +167,22 @@ class _LocationIdentifierState extends State<LocationIdentifier> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromRGBO(24, 22, 106, 1),
-                    padding: const EdgeInsets.fromLTRB(55.0,20.0,55.0,20.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0)
                     )
                   ),
-                  child: const Text("UPLOAD DESTINATION IMAGE",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15.0,
-                    letterSpacing: 0.5
-                  ),))
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.9, // Adjust the width as needed
+                    padding: EdgeInsets.symmetric(
+                      vertical: MediaQuery.of(context).size.height * 0.02,
+                    ),
+                    child: const Text("UPLOAD DESTINATION IMAGE",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.0,
+                    ),),
+                  ))
             ],
           ),
         ),

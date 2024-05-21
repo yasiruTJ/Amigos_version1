@@ -1,5 +1,12 @@
-import 'package:amigos_ver1/destination/sampleDestination.dart';
-import 'package:amigos_ver1/placesGrid.dart';
+import 'package:amigos_ver1/destination/destinationTabs.dart';
+import 'package:amigos_ver1/destination/sampleDestinationDetails.dart';
+import 'package:amigos_ver1/pictureGrids/beachesGrid.dart';
+import 'package:amigos_ver1/pictureGrids/favouritesGrid.dart';
+import 'package:amigos_ver1/pictureGrids/mountainsGrid.dart';
+import 'package:amigos_ver1/pictureGrids/popularPlacesGrid.dart';
+import 'package:amigos_ver1/services/map_services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +18,65 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  List<Map<String, dynamic>> popularDestinations = [];
+  List<Map<String, dynamic>> mountains = [];
+  List<Map<String, dynamic>> beaches = [];
+  List<Map<String, dynamic>> favPlaces = [];
+  bool isLoading = false;
+  List<String> placeIds = [];
+  final user = FirebaseAuth.instance.currentUser;
+
+  @override
+  void initState(){
+    super.initState();
+    dashboardLoadingTasks();
+  }
+
+  void dashboardLoadingTasks() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    popularDestinations = await MapServices().getPopularDestinationsUK();
+    mountains = await MapServices().getMountainsUK();
+    beaches = await MapServices().getBeachesUK();
+    final favourites = await loadFavourites();
+
+    // Iterate over the favourites map and extract IDs
+    favourites.forEach((key, value) {
+      placeIds.add("$value");
+    });
+
+    // Fetch details for favourite places
+    favPlaces = await MapServices().fetchFavPlaceDetails(placeIds);
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+
+  Future<Map<String, dynamic>> loadFavourites() async{
+    try {
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+      CollectionReference usersCollection = firestore.collection('favourites');
+      String? documentId = user?.email;
+
+      DocumentSnapshot snapshot = await usersCollection.doc(documentId).get();
+
+      if (snapshot.exists) {
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+        return data;
+      } else {
+        return {}; // Return an empty map if the document doesn't exist
+      }
+    } catch (e) {
+      print('Error loading favourites: $e');
+      return {}; // Return an empty map in case of an error
+    }
+  }
+
   //textfield controller
 
   TextEditingController controllerPlaces = TextEditingController();
@@ -19,455 +85,433 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(214, 217, 244, 1),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 30.0),
-          child: Column(
-            children: [
-              TextFormField(
-                controller: controllerPlaces,
-                decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.all(5.0),
-                    hintText: "Discover Places",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                        borderSide: BorderSide.none),
-                    fillColor: const Color.fromRGBO(236, 236, 237, 1),
-                    filled: true,
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Colors.black,
-                      size: 25.0,
-                    )),
-                cursorColor: Colors.white,
-                autocorrect: true,
-                enableSuggestions: true,
-              ),
-              const SizedBox(
-                height: 30.0,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Popular',
-                    style: TextStyle(
-                      color: Color.fromRGBO(24, 22, 106, 1),
-                      fontSize: 20,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w600,
-                      height: 0,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          CupertinoPageRoute(
-                              builder: (context) => const PlacesGrid()));
-                    },
-                    child: const Text(
-                      'See All',
+      body: isLoading
+        ? const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              backgroundColor: Colors.transparent,
+              valueColor: AlwaysStoppedAnimation<Color>(Color.fromRGBO(24, 22, 106, 1)),
+              strokeWidth: 3.0,
+            ),
+            SizedBox(height: 15.0,),
+            Text("Loading the dashboard...",
+            style: TextStyle(
+              color: Color.fromRGBO(24, 22, 106, 1),
+              fontSize: 15.0
+            ),),
+          ],
+        ),
+      )
+      :Scrollbar(
+        thickness: 10,
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 30.0),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Popular',
                       style: TextStyle(
-                        color: Color.fromRGBO(45, 87, 124, 1),
-                        fontSize: 14,
+                        color: Color.fromRGBO(24, 22, 106, 1),
+                        fontSize: 20,
                         fontFamily: 'Roboto',
                         fontWeight: FontWeight.w600,
                         height: 0,
                       ),
                     ),
-                  )
-                ],
-              ),
-              const SizedBox(
-                height: 20.0,
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: (){
-                        Navigator.push(context, CupertinoPageRoute(builder: (context)=> const SampleDestination()));
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                                builder: (context) => const PopularPlacesGrid()));
                       },
-                      child: Container(
-                        width: 157,
-                        height: 144,
-                        decoration: ShapeDecoration(
-                          image: const DecorationImage(
-                            image: NetworkImage(
-                                "https://via.placeholder.com/157x144"),
-                            fit: BoxFit.fill,
+                      child: const Text(
+                        'See All',
+                        style: TextStyle(
+                          color: Color.fromRGBO(45, 87, 124, 1),
+                          fontSize: 14,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w600,
+                          height: 0,
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+                const SizedBox(
+                  height: 20.0,
+                ),
+                Scrollbar(
+                  child: SingleChildScrollView(
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: SizedBox(
+                              height: 200,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: popularDestinations.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  final destination = popularDestinations[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    child: GestureDetector(
+                                      onTap: (){
+                                        Navigator.push(context,
+                                        CupertinoPageRoute(builder: (context)=> DestinationTabs(placeId: destination['placeId'], placeName: destination['name'],)));
+                                      },
+                                      child: Column(
+                                        children: <Widget>[
+                                          Container(
+                                            width: 157,
+                                            height: 144,
+                                            decoration: ShapeDecoration(
+                                              image: DecorationImage(
+                                                image: NetworkImage(destination['imageUrl'] ?? "https://via.placeholder.com/157x144"),
+                                                fit: BoxFit.fill,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(height: 10.0,),
+                                          Text(
+                                            destination['name'] ?? 'Unknown',
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                color: Color.fromRGBO(24, 22, 106, 1)
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                        ],
+                      )
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Mountains',
+                      style: TextStyle(
+                        color: Color.fromRGBO(24, 22, 106, 1),
+                        fontSize: 20,
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w600,
+                        height: 0,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                                builder: (context) => const MountainsGrid()));
+                      },
+                      child: const Text(
+                        'See All',
+                        style: TextStyle(
+                          color: Color.fromRGBO(45, 87, 124, 1),
+                          fontSize: 14,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w600,
+                          height: 0,
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+                const SizedBox(
+                  height: 20.0,
+                ),
+                SingleChildScrollView(
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: SizedBox(
+                            height: 200, // Set a fixed height
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: mountains.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final mountain = mountains[index];
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: GestureDetector(
+                                    onTap: (){
+                                      Navigator.push(context,
+                                      CupertinoPageRoute(builder: (context)=>DestinationTabs(placeId: mountain['placeId'], placeName: mountain['name'],)));
+                                    },
+                                    child: Column(
+                                      children: <Widget>[
+                                        Container(
+                                          width: 157,
+                                          height: 144,
+                                          decoration: ShapeDecoration(
+                                            image: DecorationImage(
+                                              image: NetworkImage(mountain['imageUrl'] ?? "https://via.placeholder.com/157x144"),
+                                              fit: BoxFit.fill,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 10.0,),
+                                        Text(
+                                          mountain['name'] ?? 'Unknown',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              color: Color.fromRGBO(24, 22, 106, 1)
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: const DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: const DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: const DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
+                      ],
                     )
-                  ],
                 ),
-              ),
-              SizedBox(
-                height: 35.0,
-              ),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Recommended',
-                    style: TextStyle(
-                      color: Color.fromRGBO(24, 22, 106, 1),
-                      fontSize: 20,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w600,
-                      height: 0,
-                    ),
-                  ),
-                  Text(
-                    'See All',
-                    style: TextStyle(
-                      color: Color.fromRGBO(45, 87, 124, 1),
-                      fontSize: 14,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w600,
-                      height: 0,
-                    ),
-                  )
-                ],
-              ),
-              SizedBox(
-                height: 20.0,
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+                    const Text(
+                      'Beaches',
+                      style: TextStyle(
+                        color: Color.fromRGBO(24, 22, 106, 1),
+                        fontSize: 20,
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w600,
+                        height: 0,
                       ),
                     ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                                builder: (context) => const BeachesGrid()));
+                      },
+                      child: const Text(
+                        'See All',
+                        style: TextStyle(
+                          color: Color.fromRGBO(45, 87, 124, 1),
+                          fontSize: 14,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w600,
+                          height: 0,
                         ),
                       ),
                     )
                   ],
                 ),
-              ),
-              SizedBox(
-                height: 20.0,
-              ),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Favourites',
-                    style: TextStyle(
-                      color: Color.fromRGBO(24, 22, 106, 1),
-                      fontSize: 20,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w600,
-                      height: 0,
-                    ),
-                  ),
-                  Text(
-                    'See All',
-                    style: TextStyle(
-                      color: Color.fromRGBO(45, 87, 124, 1),
-                      fontSize: 14,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w600,
-                      height: 0,
-                    ),
-                  )
-                ],
-              ),
-              SizedBox(
-                height: 20.0,
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+                const SizedBox(
+                  height: 20.0,
+                ),
+                SingleChildScrollView(
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: SizedBox(
+                            height: 200, // Set a fixed height
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: beaches.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final beach = beaches[index];
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: GestureDetector(
+                                    onTap: (){
+                                      Navigator.push(context,
+                                      CupertinoPageRoute(builder: (context)=>DestinationTabs(placeId: beach['placeId'], placeName: beach['name'],)));
+                                    },
+                                    child: Column(
+                                      children: <Widget>[
+                                        Container(
+                                          width: 157,
+                                          height: 144,
+                                          decoration: ShapeDecoration(
+                                            image: DecorationImage(
+                                              image: NetworkImage(beach['imageUrl'] ?? "https://via.placeholder.com/157x144"),
+                                              fit: BoxFit.fill,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 10.0,),
+                                        Text(
+                                          beach['name'] ?? 'Unknown',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Color.fromRGBO(24, 22, 106, 1)
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                ),
+                SizedBox(
+                  height: 20.0,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+                     const Text(
+                      'Favourites',
+                      style: TextStyle(
+                        color: Color.fromRGBO(24, 22, 106, 1),
+                        fontSize: 20,
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w600,
+                        height: 0,
                       ),
                     ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 15.0,
-                    ),
-                    Container(
-                      width: 157,
-                      height: 144,
-                      decoration: ShapeDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              "https://via.placeholder.com/157x144"),
-                          fit: BoxFit.fill,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                                builder: (context) => FavouritesGrid(placeIds: placeIds)));
+                      },
+                      child: const Text(
+                        'See All',
+                        style: TextStyle(
+                          color: Color.fromRGBO(45, 87, 124, 1),
+                          fontSize: 14,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w600,
+                          height: 0,
                         ),
                       ),
                     )
                   ],
                 ),
-              ),
-            ],
+                SizedBox(
+                  height: 20.0,
+                ),
+                favPlaces.isNotEmpty
+                ?SingleChildScrollView(
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: SizedBox(
+                            height: 200, // Set a fixed height
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: favPlaces.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final placeName = favPlaces[index];
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: GestureDetector(
+                                    onTap: (){
+                                      Navigator.push(context,
+                                          CupertinoPageRoute(builder: (context)=>DestinationTabs(placeId: placeName['placeId'], placeName: placeName['name'],)));
+                                    },
+                                    child: Column(
+                                      children: <Widget>[
+                                        Container(
+                                          width: 157,
+                                          height: 144,
+                                          decoration: ShapeDecoration(
+                                            image: DecorationImage(
+                                              image: NetworkImage(placeName['imageUrl'] ?? "https://via.placeholder.com/157x144"),
+                                              fit: BoxFit.fill,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 10.0,),
+                                        Text(
+                                          placeName['name'],
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              color: Color.fromRGBO(24, 22, 106, 1)
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                )
+                    :Container(
+                        height: 200,
+                        width: 400,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white,
+                    ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.location_off_outlined, color: Color.fromRGBO(24, 22, 106, 1),),
+                            SizedBox(height: 10.0,),
+                            Text("No favourite destinations found",
+                              style: TextStyle(
+                                color: Color.fromRGBO(24, 22, 106, 1),
+                                fontSize: 15,
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.w600,
+                                height: 0,
+                              ),),
+                            SizedBox(height: 10.0,),
+                            Text("Explore more and add some destinations as your favourites!",
+                              style: TextStyle(
+                                color: Color.fromRGBO(24, 22, 106, 1),
+                                fontSize: 12,
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.normal,
+                                height: 0,
+                              ),),
+                          ],
+                        )
+                      )
+              ],
+            ),
           ),
         ),
       ),
