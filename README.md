@@ -1,16 +1,12 @@
-# amigos_ver1
+# Amigos_Version 01
 
-FYP Project
+Amigos is a mobile application designed using the Flutter framework. This application is intended as a travel guide for tourists to aid them in planning their vacations. Not only that, Amigos can be used as a travel partner to find and decide on which locations to visit. The functionalities provided are, 
 
-## Getting Started
+  1. Tourist attraction identification based on an image
+  2. Real-time information retrieval of the locations using Google Places API
+  3. Special map designed to cater to tourist needs (Places of Interest and navigation guidance similar to Google Maps)
+  4. Tour guide pairing for respective locations
 
-This project is a starting point for a Flutter application.
+Watch the demo for more information on how the application works - https://drive.google.com/file/d/19hLOGp0R6LoelI9-bsqVETnkeflG7dUI/view?usp=sharing
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
